@@ -1,6 +1,8 @@
 const express = require('express')
 const morgan = require('morgan')
 const campsiteRouter = require('./routes/campsiteRouter')
+const promotionsRouter = require('./routes/promotionsRouter')
+const partnerRouter = require('./routes/partnerRouter')
 
 const hostname = 'localhost'
 const port = 3000
@@ -11,11 +13,13 @@ const app = express()
 //Will only use this middlware/log in development mode:
 app.use(morgan('dev'))
 
-//Converts json to javascript objects for us:
+//Converts incoming json to javascript objects for us:
 app.use(express.json())
 
 //We provide the root path for our campsiteRouter instance
 app.use('/campsites', campsiteRouter)
+app.use('/promotions', promotionsRouter)
+app.use('/partners', partnerRouter)
 
 
 //This sets up the home directory dynamically.
