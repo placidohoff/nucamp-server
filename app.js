@@ -7,7 +7,7 @@ var logger = require('morgan');
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
 const campsiteRouter = require('./routes/campsiteRouter')
-const promotionsRouter = require('./routes/promotionsRouter')
+const promotionRouter = require('./routes/promotionRouter')
 const partnerRouter = require('./routes/partnerRouter')
 
 //Connect to MongoDB Server:
@@ -40,7 +40,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use('/', indexRouter);
 app.use('/users', usersRouter);
 app.use('/campsites', campsiteRouter);
-app.use('/promotions', promotionsRouter);
+app.use('/promotions', promotionRouter);
 app.use('/partners', partnerRouter);
 
 // catch 404 and forward to error handler
