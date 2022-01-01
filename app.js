@@ -34,6 +34,41 @@ app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
+
+//AUTHENTICATION PROCESS:
+//PLACED BEFORE RETURNING ANY STATIC INFO OR ANY INFO AT ALL IN THIS CASE
+//WE ARE JUST DEFINING THE FUNCTION HERE. IT IS NOT CALLED JUST YET
+function auth(req, res, next) {
+  console.log(req.headers)
+  const authHeader = req.headers.authorization
+  if (!authHeader) {
+    const err = new Error('You are not authenticated!')
+    //response sent back to user letting the client's browser know that they must provide authentication by setting the authentication to 'Basic'
+    res.setHeader('WWW-Authenticate', 'Basic')
+    err.status = 401
+    return next(err)
+  }
+
+  //if an autherization is provided:
+  //Separate the password and user from the header via split methods on the string provided:
+  const auth = Buffer.from(authHeader.split(' ')[1], 'base64').toString().split(':')
+  const user = auth[0]
+  const pass = auth[1]
+
+  if (user === 'admin' && pass === 'password') {
+    return next() //authorization success
+  } else {
+    const err = new Error('You are not authenticated')
+    res.setHeader('WWW-Authenticate', 'Basic')
+    err.status = 401
+    return next(err)
+  }
+
+}
+
+//Call our auth function before serving any data to the user:
+app.use(auth)
+
 app.use(express.static(path.join(__dirname, 'public')));
 
 //separate route files:
