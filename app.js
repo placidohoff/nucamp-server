@@ -3,6 +3,8 @@ var express = require('express');
 var path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
+const session = require('express-session')
+const FileStore = require('session-file-store')(session)
 
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
@@ -34,14 +36,23 @@ app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 //We are providing a 'secret key' to our cookie's making them "signed-cookies" so we can validate if the cookie returned actually came from our server
-app.use(cookieParser('12345-67890-09876-54321'));
+//app.use(cookieParser('12345-67890-09876-54321'));
+//^^We are no longer using cookies to strore login information but rather using the 'session' object
+
+app.use(session({
+  name: 'session-id',
+  secret: '12345-67890-09876-54321',
+  saveUninitialized: false,
+  resave: false,
+  store: new FileStore()
+}))
 
 //AUTHENTICATION PROCESS:
 //WE ARE JUST DEFINING THE FUNCTION HERE. IT IS NOT CALLED JUST YET
 function auth(req, res, next) {
   console.log(req.headers)
-  //If we cookie, request/challenge the user to sign in
-  if (!req.signedCookies.user) {
+  //If no session object exist, request/challenge the user to sign in
+  if (!req.session.user) {
     const authHeader = req.headers.authorization
     if (!authHeader) {
       const err = new Error('You are not authenticated!')
@@ -58,8 +69,8 @@ function auth(req, res, next) {
     const pass = auth[1]
 
     if (user === 'admin' && pass === 'password') {
-      //Set cookie so that future challenges will not happen for this session:
-      res.cookie('user', 'admin', { signed: true })
+      //Set session object's user to admin so that future challenges will not be necessary for this session since we already establish an admin is logged in:
+      req.session.user = 'admin'
       //Proceed to next middleware:
       return next() //authorization success
     } else {
@@ -69,9 +80,9 @@ function auth(req, res, next) {
       return next(err)
     }
   }
-  //IF THERE IS INDEED A COOKIE:
+  //IF THERE IS INDEED A SESSION OBJECT:
   else {
-    if (req.signedCookies.user === 'admin') {
+    if (req.session.user === 'admin') {
       return next()
     } else {
       const err = new Error('You are not authenticated')
