@@ -1,5 +1,9 @@
 const express = require('express')
 const campsiteRouter = express.Router()
+const authenticate = require('../authenticate')
+//^^WE WILL USE THIS TO AUTHENTICATE EACH ENPOINT FOR THIS ROUTE OTHER THAN FOR 'GET' REQUESTS SINCE THAT IS READ-ONLY AND WILL NOT EFFECT THE SERVER
+
+
 const Campsite = require('../models/campsite')
 
 //The full root path is provided within server.js:
@@ -15,7 +19,7 @@ campsiteRouter.route('/')
             })
             .catch(err => next(err))
     })
-    .post((req, res, next) => {
+    .post(authenticate.verifyUser, (req, res, next) => {
         //Mongoose will automatically validate if the req.body from the user is valid according to our Mongoose Schema
         Campsite.create(req.body)
             .then(campsite => {
@@ -26,11 +30,11 @@ campsiteRouter.route('/')
             })
             .catch(err => next(err))
     })
-    .put((req, res) => {
+    .put(authenticate.verifyUser, (req, res) => {
         res.statusCode = 403
         res.end('PUT operation not supported on /campsites')
     })
-    .delete((req, res, next) => {
+    .delete(authenticate.verifyUser, (req, res, next) => {
         Campsite.deleteMany()
             .then(response => {
                 res.statusCode = 200
@@ -50,11 +54,11 @@ campsiteRouter.route('/:campsiteId')
             })
             .catch(err => next(err))
     })
-    .post((req, res) => {
+    .post(authenticate.verifyUser, (req, res) => {
         res.status = 403
         res.end(`POST operation not supported on /campsites/${req.params.campsiteId}`)
     })
-    .put((req, res) => {
+    .put(authenticate.verifyUser, (req, res) => {
         Campsite.findByIdAndUpdate(req.params.campsiteId, {
             $set: req.body
         }, { new: true })
@@ -94,7 +98,7 @@ campsiteRouter.route('/:campsiteId/comments')
             })
             .catch(err => next(err))
     })
-    .post((req, res, next) => {
+    .post(authenticate.verifyUser, (req, res, next) => {
         //Mongoose will automatically validate if the req.body from the user is valid according to our Mongoose Schema
         Campsite.findById(req.params.campsiteId)
             .then(campsite => {
@@ -117,11 +121,11 @@ campsiteRouter.route('/:campsiteId/comments')
             })
             .catch(err => next(err))
     })
-    .put((req, res) => {
+    .put(authenticate.verifyUser, (req, res) => {
         res.statusCode = 403
         res.end(`PUT operation not supported on /campsites/${req.params.campsiteId}/comments`)
     })
-    .delete((req, res, next) => {
+    .delete(authenticate.verifyUser, (req, res, next) => {
         Campsite.findById(req.params.campsiteId)
             .then(campsite => {
                 if (campsite) {
@@ -169,11 +173,11 @@ campsiteRouter.route('/:campsiteId/comments/:commentId')
             })
             .catch(err => next(err))
     })
-    .post((req, res) => {
+    .post(authenticate.verifyUser, (req, res) => {
         res.statusCode = 403
         res.end(`POST operation not supported on /campsites/${req.params.campsiteId}/comments/${req.params.commentId}`)
     })
-    .put((req, res) => {
+    .put(authenticate.verifyUser, (req, res) => {
         Campsite.findById(req.params.campsiteId)
             .then(campsite => {
                 if (campsite && campsite.comments.id(req.params.commentId)) {
@@ -206,7 +210,7 @@ campsiteRouter.route('/:campsiteId/comments/:commentId')
             })
             .catch(err => next(err))
     })
-    .delete((req, res, next) => {
+    .delete(authenticate.verifyUser, (req, res, next) => {
         Campsite.findById(req.params.campsiteId)
             .then(campsite => {
                 if (campsite && campsite.comments.id(req.params.commentId)) {

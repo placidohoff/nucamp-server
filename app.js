@@ -1,12 +1,10 @@
+//WE REMOVED COOKIE & SESSION-RELATED IMPORTS AND MIDDLEWARE AND USE JWT-RELATED IMPORTS INSTEAD
 var createError = require('http-errors');
 var express = require('express');
 var path = require('path');
-var cookieParser = require('cookie-parser');
 var logger = require('morgan');
-const session = require('express-session')
-const FileStore = require('session-file-store')(session)
 const passport = require('passport')
-const authenticate = require('./authenticate')
+const config = require('./config')
 
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
@@ -16,7 +14,7 @@ const partnerRouter = require('./routes/partnerRouter')
 
 //Connect to MongoDB Server:
 const mongoose = require('mongoose')
-const url = 'mongodb://localhost:27017/nucampsite'
+const url = config.mongoUrl
 const connect = mongoose.connect(url, {
   useCreateIndex: true,
   useFindAndModify: false,
@@ -37,53 +35,21 @@ app.set('view engine', 'jade');
 app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
-//We are providing a 'secret key' to our cookie's making them "signed-cookies" so we can validate if the cookie returned actually came from our server
-//app.use(cookieParser('12345-67890-09876-54321'));
-//^^We are no longer using cookies to strore login information but rather using the 'session' object
 
-app.use(session({
-  name: 'session-id',
-  secret: '12345-67890-09876-54321',
-  saveUninitialized: false,
-  resave: false,
-  store: new FileStore()
-}))
 
 app.use(passport.initialize())
-app.use(passport.session())
-//^^Handles session logic, placing the info into 'req.user'
+
 
 //Return the home and users home to the client so they can be prompted by the auth middleware to log in
 app.use('/', indexRouter);
 app.use('/users', usersRouter);
 
-//AUTHENTICATION PROCESS:
-//WE ARE JUST DEFINING THE FUNCTION HERE. IT IS NOT CALLED JUST YET
-function auth(req, res, next) {
-  console.log(req.user)
 
-  //If no session object exist, request/challenge the user to sign in
-  if (!req.user) {
-    const err = new Error('You are not authenticated!')
-    err.status = 401
-    return next(err)
-
-  }
-  //IF THE CLIENT HAS A SESSION
-  else {
-
-    return next()
-  }
-
-
-}
-
-//Call our auth function before serving any data to the user:
-app.use(auth)
 
 app.use(express.static(path.join(__dirname, 'public')));
 
-
+//WE NO LONGER USE 'AUTH' TO PROTECT ACCESS TO THE ENDPOINTS AT THE TOP LEVEL
+//INSTEAD WE WILL PROTECT/CHECK ACCESS TO EACH ROUTE INDIVIDUALLY AND UNIQUELY 
 app.use('/campsites', campsiteRouter);
 app.use('/promotions', promotionRouter);
 app.use('/partners', partnerRouter);
