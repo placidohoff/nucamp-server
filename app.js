@@ -47,42 +47,24 @@ app.use(session({
   store: new FileStore()
 }))
 
+//Return the home and users home to the client so they can be prompted by the auth middleware to log in
+app.use('/', indexRouter);
+app.use('/users', usersRouter);
+
 //AUTHENTICATION PROCESS:
 //WE ARE JUST DEFINING THE FUNCTION HERE. IT IS NOT CALLED JUST YET
 function auth(req, res, next) {
   console.log(req.headers)
   //If no session object exist, request/challenge the user to sign in
   if (!req.session.user) {
-    const authHeader = req.headers.authorization
-    if (!authHeader) {
-      const err = new Error('You are not authenticated!')
-      //response sent back to user letting the client's browser know that they must provide authentication by setting the authentication to 'Basic'
-      res.setHeader('WWW-Authenticate', 'Basic')
-      err.status = 401
-      return next(err)
-    }
+    const err = new Error('You are not authenticated!')
+    err.status = 401
+    return next(err)
 
-    //if an autherization is provided:
-    //Separate the password and user from the header via split methods on the string provided:
-    const auth = Buffer.from(authHeader.split(' ')[1], 'base64').toString().split(':')
-    const user = auth[0]
-    const pass = auth[1]
-
-    if (user === 'admin' && pass === 'password') {
-      //Set session object's user to admin so that future challenges will not be necessary for this session since we already establish an admin is logged in:
-      req.session.user = 'admin'
-      //Proceed to next middleware:
-      return next() //authorization success
-    } else {
-      const err = new Error('You are not authenticated')
-      res.setHeader('WWW-Authenticate', 'Basic')
-      err.status = 401
-      return next(err)
-    }
   }
-  //IF THERE IS INDEED A SESSION OBJECT:
+  //IF THE CLIENT HAS A SESSION
   else {
-    if (req.session.user === 'admin') {
+    if (req.session.user === 'authenticated') {
       return next()
     } else {
       const err = new Error('You are not authenticated')
@@ -98,9 +80,7 @@ app.use(auth)
 
 app.use(express.static(path.join(__dirname, 'public')));
 
-//separate route files:
-app.use('/', indexRouter);
-app.use('/users', usersRouter);
+
 app.use('/campsites', campsiteRouter);
 app.use('/promotions', promotionRouter);
 app.use('/partners', partnerRouter);
